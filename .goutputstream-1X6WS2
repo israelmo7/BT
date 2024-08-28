@@ -1,0 +1,246 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "btlib.h"
+#define TARGET_NODE 4
+#define IS_NUMBER(x) ((x >= '0') && (x <= '9'))
+
+typedef struct Payload_Node
+{
+	int _x;
+	int _y;
+	char _info[5];
+	
+	struct Payload_Node* _next;
+	struct Payload_Node* _before;
+	
+	
+}Node;
+
+void setNode(Node* n, int x, int y, char* info, Node* back)
+{
+	
+		n->_x = x;
+		n->_y = y;
+		strcpy(n->_info,info);
+		n->_next = NULL;
+		n->_before = back;
+}
+int sendPayload(char* payload, int len)
+{
+	int i=0,j=0;
+	
+	while(payload[i] && j < i+50)
+	{
+		if(write_node(TARGET_NODE,payload+i*sizeof(char),1) == 1)
+		{
+			i++;
+		}
+		j++;	
+	}
+	
+	return i;
+}Node* watchAndChange(Node* head)
+{
+	Node* realHead = head;
+	int tmp = 0;
+	unsigned int index = 0;
+	char choice = 0;
+	Node* tempN = NULL;
+	
+	while (head)
+	{
+		cout << "Heres the Nodes :: ";
+		displayNodes(realHead);
+		cout << endl << "---------------------------------------------" << endl;
+		cout << "[Node " << index << "]:\
+X: " << head->_x << "\
+Y: " << head->_y << "\
+Info: " << head->_info <<endl;
+		cout << endl << "---------------------------------------------" << endl;
+		cout << "1)Change\n2)Add\n3)Remove\n4)Move Segment\n5)Next\n6)Back\n9)Exit\n";
+		cin >> choice;
+		
+		switch (choice)
+		{
+		case '1':
+			cout << "x)X axis\ny)Y axis\ni)Info\n:>>: ";
+			cin >> choice;
+			//tmp = stoi(choice);
+			cout << "Enter new Value: ";
+			if (choice == 'x')
+				cin >> head->_x;
+			else if (choice == 'y')
+				cin >> head->_y;
+			else if (choice == 'i')
+				cin >> head->_info;
+			else
+				choice == 0;
+			break;
+		case '2':
+			puts("Enter Value: \n");
+			cin >> tmp;
+			addNode(head, tmp, false);
+			break;
+		case '3':
+			realHead = deleteNode(realHead);
+			head = realHead;
+			index = 0;
+			break;
+		case '4':
+			puts"\nSegment: ");
+			cin >> tmp;
+			 tempN = searchNode(realHead, tmp);
+			if (tempN)
+			{
+				head = tempN;
+				index = tmp;
+			}
+			break;
+		case '5':
+			index++;
+			head = head->_next;
+			break;
+		case '6':
+			index--;
+			head = head->_back;
+			break;
+		case '9':
+			head = NULL;
+			break;
+		default:
+			puts("Error: only 1-4\n");
+			break;
+		}
+	}
+	return realHead;
+}
+Node* payloadToList(string payload)
+{
+	int i = 0,seg=0, cnt = 0, len = (int)payload.length();
+	char tav = 0;
+	string buff = "";
+	int temp = 0;
+	Node *node = NULL,
+		 *head = new Node(0),
+		 *oldOne = head;
+
+	for (i = 0; i < len; i++)
+	{
+		//cout << "*";
+		tav = payload[i];
+		if ((tav >= '0' && tav <= '9') || tav == '-')
+		{
+			buff += tav;
+		}
+		else if (tav == ':')
+		{
+			node = new Node(oldOne);
+			oldOne->_next = node;
+
+			temp = stoi(buff);
+			buff = "";
+			node->_x = temp;
+		}
+		else if (tav == '!')
+		{
+			cnt = 0;
+			oldOne = node;
+			temp = stoi(buff);
+			buff = "";
+			node->_y = temp;
+			node->_segment = seg;
+		}
+		else if (tav == '^')
+		{
+			seg++;
+		}
+		else if (tav == 'v')
+		{
+			seg--;
+		}
+		else
+		{
+			switch (tav)
+			{
+			case 'O':
+			case 'L':
+			case '.':
+			case 'c':
+			case 'C':
+				node->_info[cnt++] = tav;
+				node->_info[cnt] = 0;
+			default:
+				break;
+			}
+		}
+	}
+	return head;
+}
+void deleteNodes(Node* head)
+{
+	Node* pt = head;
+	while(head)
+	{
+		pt= head->_next;
+		free(head);
+		head=pt;
+	}
+	
+	
+}
+int main()
+{
+	int channel,response = 0;
+	char nread[10] = {0};
+	char tav = 0;
+	unsigned char *message = {"Hello world\n"};
+
+	if(init_blue("devices.txt") == 0)
+	{
+		return(0);
+	}
+	printf("Node 4 must be TYPE=CLASSIC in devices.txt\n");  
+	channel = 1;//find_channel(4,UUID_16,strtohex("FCF05AFD-67D8-4F41-83F5-7BEE22C03CDB",NULL));
+	printf("Channel: %d\n",channel);
+	response = connect_node(TARGET_NODE,CHANNEL_NEW,channel);
+	if(response == 1)
+	{	
+		printf("LeaRsi@rp: Connected!\n");
+		response = device_connected(TARGET_NODE);
+		printf("Is It? %d\n",response);
+		while(response && tav != 'x')
+		{
+			
+			tav = 0;
+			response = read_node_count(TARGET_NODE,nread,1,EXIT_TIMEOUT,1000);
+			if(response)
+			{
+				printf("[%d]Recived: %s\n",response,nread);
+			}
+			puts("Send (Enter for nothing): ");
+			
+			tav = getchar();
+			printf("%c|",tav);
+			if(tav != '\n')
+			{
+				write_node(TARGET_NODE, &tav,1);
+			}
+			else
+			{
+				puts("yay\n");
+			}
+			response = device_connected(TARGET_NODE);
+
+		}
+		disconnect_node(4);
+	}
+	else
+	{
+		printf("Couldnt Connect ..\n");
+	  
+	}
+
+	close_all();
+	return(1);
+}

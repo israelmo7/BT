@@ -1,0 +1,26 @@
+[Set ON - for joystick and A-C]
+Report               7 byte Permit 12 rn  Handle=001B UUID=2A4D //Set on.
+////////
+[Set ON - for FRONT/BACK]
+Report               9 byte Permit 12 rn  Handle=001B UUID=2A4D //Set on.
+////////
+
+01 00 - UP
+02 00 - Down
+00 00 - Center
+
+40 00 - Left
+50 00 - Center
+60 00 - Right
+
+04 00 - A
+03 00 - B // not working
+02 00 - C
+01 00 - D
+00 00 - Release 
+
+02 50 - Front Press
+00 50 - Front Release
+
+01 50 - Back Press
+00 50 - Back Release
