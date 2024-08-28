@@ -16,7 +16,7 @@ Window child;
 
 int notify_callback(int lenode, int cticn, unsigned char* buf, int nread)
 {
-	int x=0,y=0;
+	int 	x=0,y=0;
 
 	unsigned int mask;
 	
